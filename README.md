@@ -36,10 +36,26 @@ frontal y, como la nave es simétrica, se ven casi iguales.
 
 ```bash
 cargo build --release                          # compilar
-cargo run --release                            # abrir la ventana (ESC para cerrar)
+cargo run --release                            # abrir la ventana (1-6 cambian la vista, ESC cierra)
 cargo run --release -- --screenshot            # regenerar las capturas de evidence/ sin ventana
 cargo test -- --nocapture                      # tests (muestra vértices y triángulos)
 ```
+
+### Controles de la ventana
+
+| Tecla | Vista |
+| --- | --- |
+| `1` | Frente |
+| `2` | Atrás |
+| `3` | Izquierda |
+| `4` | Derecha |
+| `5` | Arriba |
+| `6` | Abajo |
+| `ESC` | Cerrar |
+
+También funcionan las teclas 1-6 del teclado numérico. Al cambiar de vista el
+modelo se vuelve a rasterizar en el framebuffer y se actualiza la textura; la
+vista actual se muestra en el título de la ventana.
 
 ## Pipeline
 
@@ -56,7 +72,7 @@ Archivo OBJ → vértices + índices → triángulos → líneas → píxeles �
 | triángulos → líneas | `src/triangle.rs` · `triangle` | Dibuja las 3 aristas con `line`. |
 | líneas → píxeles | `src/line.rs` · `line` | Algoritmo de Bresenham propio; cada píxel va a `Framebuffer::point`. |
 | píxeles → pantalla | `src/framebuffer.rs` · `Framebuffer` | Buffer de color propio con `clear`, `point` (con bounds-check), color actual, `to_image` y `save_png`. |
-| ventana / captura | `src/main.rs` · `run_window` / `screenshot` | Ventana de 800x600 que muestra el framebuffer como textura, o guarda `evidence/screenshot.png` y las capturas de cada vista. |
+| ventana / captura | `src/main.rs` · `run_window` / `screenshot` | Ventana de 800x600 que muestra el framebuffer como textura (teclas 1-6 para cambiar de vista), o guarda `evidence/screenshot.png` y las capturas de cada vista. |
 
 ## Modelo
 
