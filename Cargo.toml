@@ -1,0 +1,12 @@
+[package]
+name = "obj_wireframe_renderer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+raylib = { version = "6.0.0", features = ["SUPPORT_IMAGE_GENERATION"] }
+
+# Compila raylib con CMake en Release también en dev; en Debug enlaza
+# MSVCRTD y produce el warning LNK4098 en Windows.
+[profile.dev.build-override]
+debug-assertions = false
