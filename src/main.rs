@@ -28,7 +28,7 @@ fn main() {
 }
 
 /// Archivo OBJ → vértices + índices → triángulos → líneas → píxeles.
-fn draw_model() -> Framebuffer {
+fn rasterize_model() -> Framebuffer {
     let obj = Obj::load(MODEL_PATH).unwrap_or_else(|err| {
         eprintln!("error: {err}");
         std::process::exit(1);
@@ -50,7 +50,7 @@ fn draw_model() -> Framebuffer {
 
 /// Renderiza sin abrir ventana y guarda la captura en evidence/.
 fn screenshot() {
-    let framebuffer = draw_model();
+    let framebuffer = rasterize_model();
     let path = Path::new(SCREENSHOT_PATH);
     match framebuffer.save_png(path) {
         Ok(()) => println!("Captura guardada en {}", path.display()),
@@ -63,7 +63,7 @@ fn screenshot() {
 
 /// Muestra el framebuffer en una ventana; raylib solo sube la textura.
 fn run_window() {
-    let framebuffer = draw_model();
+    let framebuffer = rasterize_model();
 
     let (mut rl, thread) = raylib::init()
         .size(WIDTH, HEIGHT)
