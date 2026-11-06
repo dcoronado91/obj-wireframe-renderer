@@ -3,3 +3,4 @@ pub mod obj;
 pub mod line;
 pub mod triangle;
 pub mod transform;
+pub mod render;
