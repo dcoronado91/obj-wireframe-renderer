@@ -47,14 +47,18 @@ impl Framebuffer {
         self.index(x, y).map(|index| self.pixels[index])
     }
 
+    /// Píxeles en bytes RGBA8, fila por fila (formato de textura de raylib).
+    pub fn to_rgba_bytes(&self) -> Vec<u8> {
+        self.pixels
+            .iter()
+            .flat_map(|c| [c.r, c.g, c.b, c.a])
+            .collect()
+    }
+
     /// Copia el buffer a una `Image` RGBA8 de raylib (para textura o PNG).
     pub fn to_image(&self) -> Image {
         let image = Image::gen_image_color(self.width, self.height, self.background_color);
-        let bytes: Vec<u8> = self
-            .pixels
-            .iter()
-            .flat_map(|c| [c.r, c.g, c.b, c.a])
-            .collect();
+        let bytes = self.to_rgba_bytes();
         // SAFETY: gen_image_color reserva width * height píxeles RGBA8
         // (4 bytes cada uno), exactamente el tamaño de `bytes`.
         unsafe {
