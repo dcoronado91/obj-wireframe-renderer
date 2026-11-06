@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use raylib::prelude::*;
 
@@ -12,7 +12,7 @@ const HEIGHT: i32 = 600;
 const BACKGROUND: Color = Color::new(18, 20, 28, 255);
 const MODEL_COLOR: Color = Color::new(225, 235, 245, 255);
 const MODEL_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/Untitled.obj");
-const SCREENSHOT_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/evidence/screenshot.png");
+const EVIDENCE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/evidence");
 const USAGE: &str = "uso: obj_wireframe_renderer [--screenshot]";
 
 fn main() {
@@ -27,8 +27,7 @@ fn main() {
     }
 }
 
-/// Archivo OBJ → vértices + índices → triángulos → líneas → píxeles.
-fn rasterize_model() -> Framebuffer {
+fn load_model() -> Obj {
     let obj = Obj::load(MODEL_PATH).unwrap_or_else(|err| {
         eprintln!("error: {err}");
         std::process::exit(1);
@@ -38,32 +37,47 @@ fn rasterize_model() -> Framebuffer {
         obj.vertices.len(),
         obj.faces.len()
     );
+    obj
+}
 
-    let transform = ScreenTransform::fit(&obj.vertices, View::Front, WIDTH, HEIGHT);
+/// Archivo OBJ → vértices + índices → triángulos → líneas → píxeles.
+fn rasterize_model(obj: &Obj, view: View) -> Framebuffer {
+    let transform = ScreenTransform::fit(&obj.vertices, view, WIDTH, HEIGHT);
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     framebuffer.set_background_color(BACKGROUND);
     framebuffer.clear();
     framebuffer.set_current_color(MODEL_COLOR);
-    render(&mut framebuffer, &obj, &transform);
+    render(&mut framebuffer, obj, &transform);
     framebuffer
 }
 
-/// Renderiza sin abrir ventana y guarda la captura en evidence/.
+/// La vista frontal es `screenshot.png`; las demás `screenshot_<vista>.png`.
+fn screenshot_path(view: View) -> PathBuf {
+    let name = match view {
+        View::Front => "screenshot.png".to_string(),
+        other => format!("screenshot_{}.png", other.name()),
+    };
+    Path::new(EVIDENCE_DIR).join(name)
+}
+
+/// Renderiza todas las vistas sin abrir ventana y las guarda en evidence/.
 fn screenshot() {
-    let framebuffer = rasterize_model();
-    let path = Path::new(SCREENSHOT_PATH);
-    match framebuffer.save_png(path) {
-        Ok(()) => println!("Captura guardada en {}", path.display()),
-        Err(err) => {
-            eprintln!("error: {err}");
-            std::process::exit(1);
+    let obj = load_model();
+    for view in View::ALL {
+        let path = screenshot_path(view);
+        match rasterize_model(&obj, view).save_png(&path) {
+            Ok(()) => println!("Captura {} guardada en {}", view.name(), path.display()),
+            Err(err) => {
+                eprintln!("error: {err}");
+                std::process::exit(1);
+            }
         }
     }
 }
 
 /// Muestra el framebuffer en una ventana; raylib solo sube la textura.
 fn run_window() {
-    let framebuffer = rasterize_model();
+    let framebuffer = rasterize_model(&load_model(), View::Front);
 
     let (mut rl, thread) = raylib::init()
         .size(WIDTH, HEIGHT)
