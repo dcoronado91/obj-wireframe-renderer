@@ -75,22 +75,68 @@ fn screenshot() {
     }
 }
 
+/// Teclas 1 a 6 (fila superior o teclado numérico) para cada vista.
+const VIEW_KEYS: [(KeyboardKey, KeyboardKey, View); 6] = [
+    (KeyboardKey::KEY_ONE, KeyboardKey::KEY_KP_1, View::Front),
+    (KeyboardKey::KEY_TWO, KeyboardKey::KEY_KP_2, View::Back),
+    (KeyboardKey::KEY_THREE, KeyboardKey::KEY_KP_3, View::Left),
+    (KeyboardKey::KEY_FOUR, KeyboardKey::KEY_KP_4, View::Right),
+    (KeyboardKey::KEY_FIVE, KeyboardKey::KEY_KP_5, View::Top),
+    (KeyboardKey::KEY_SIX, KeyboardKey::KEY_KP_6, View::Bottom),
+];
+
+fn view_label(view: View) -> &'static str {
+    match view {
+        View::Front => "frente",
+        View::Back => "atrás",
+        View::Left => "izquierda",
+        View::Right => "derecha",
+        View::Top => "arriba",
+        View::Bottom => "abajo",
+    }
+}
+
+fn window_title(view: View) -> String {
+    format!(
+        "OBJ Wireframe Renderer - Untitled.obj - vista {} (1-6 cambiar vista, ESC salir)",
+        view_label(view)
+    )
+}
+
 /// Muestra el framebuffer en una ventana; raylib solo sube la textura.
+/// Al cambiar de vista se vuelve a rasterizar y se actualiza la textura.
 fn run_window() {
-    let framebuffer = rasterize_model(&load_model(), View::Front);
+    let obj = load_model();
+    let mut view = View::Front;
+    let framebuffer = rasterize_model(&obj, view);
 
     let (mut rl, thread) = raylib::init()
         .size(WIDTH, HEIGHT)
-        .title("OBJ Wireframe Renderer - Untitled.obj (ESC para salir)")
+        .title(&window_title(view))
         .build();
     rl.set_target_fps(60);
     rl.set_exit_key(Some(KeyboardKey::KEY_ESCAPE));
 
-    let texture = rl
+    let mut texture = rl
         .load_texture_from_image(&thread, &framebuffer.to_image())
         .expect("no se pudo crear la textura del framebuffer");
 
+    println!("Teclas: 1 frente, 2 atrás, 3 izquierda, 4 derecha, 5 arriba, 6 abajo, ESC salir");
+
     while !rl.window_should_close() {
+        let selected = VIEW_KEYS
+            .iter()
+            .find(|(key, keypad, _)| rl.is_key_pressed(*key) || rl.is_key_pressed(*keypad))
+            .map(|&(_, _, view)| view);
+        if let Some(new_view) = selected.filter(|&v| v != view) {
+            view = new_view;
+            texture
+                .update_texture(&rasterize_model(&obj, view).to_rgba_bytes())
+                .expect("no se pudo actualizar la textura del framebuffer");
+            rl.set_window_title(&thread, &window_title(view));
+            println!("Vista: {}", view_label(view));
+        }
+
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(BACKGROUND);
         d.draw_texture(&texture, 0, 0, Color::WHITE);
