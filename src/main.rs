@@ -5,7 +5,7 @@ use raylib::prelude::*;
 use obj_wireframe_renderer::framebuffer::Framebuffer;
 use obj_wireframe_renderer::obj::Obj;
 use obj_wireframe_renderer::render::render;
-use obj_wireframe_renderer::transform::ScreenTransform;
+use obj_wireframe_renderer::transform::{ScreenTransform, View};
 
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 600;
@@ -39,7 +39,7 @@ fn rasterize_model() -> Framebuffer {
         obj.faces.len()
     );
 
-    let transform = ScreenTransform::fit(&obj.vertices, WIDTH, HEIGHT);
+    let transform = ScreenTransform::fit(&obj.vertices, View::Front, WIDTH, HEIGHT);
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     framebuffer.set_background_color(BACKGROUND);
     framebuffer.clear();
